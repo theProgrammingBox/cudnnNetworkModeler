@@ -41,10 +41,6 @@ int main()
 	cudnnCreateTensorDescriptor(&outputDescriptor);
 	cudnnSetTensor4dDescriptor(outputDescriptor, CUDNN_TENSOR_NCHW, CUDNN_DATA_FLOAT, batchSize, outputFeatures, 1, 1);
 	
-	cudnnTensorDescriptor_t targetDescriptor;
-	cudnnCreateTensorDescriptor(&targetDescriptor);
-	cudnnSetTensor4dDescriptor(targetDescriptor, CUDNN_TENSOR_NCHW, CUDNN_DATA_FLOAT, batchSize, outputFeatures, 1, 1);
-	
 	cudnnConvolutionDescriptor_t propagationDescriptor;
 	cudnnCreateConvolutionDescriptor(&propagationDescriptor);
 	cudnnSetConvolution2dDescriptor(propagationDescriptor, 0, 0, 1, 1, 1, 1, CUDNN_CROSS_CORRELATION, CUDNN_DATA_FLOAT);
