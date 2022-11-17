@@ -6,13 +6,14 @@ int main()
 	const size_t batchSize = 7;
 	const size_t inputFeatures = 5;
 	const size_t outputFeatures = 3;
+	const float learningRate = 0.01f;
 
 	float* cpuInput;
 	float* cpuInputGradient;
 	float* cpuOutput;
 	float* cpuTarget;
 
-	Modeler modeler(batchSize, inputFeatures);
+	Modeler modeler(batchSize, inputFeatures, learningRate);
 	modeler.addLayer(new Layer(outputFeatures));
 	modeler.init();
 

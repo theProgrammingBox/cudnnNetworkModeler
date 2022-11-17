@@ -11,6 +11,7 @@ public:
 	
 	size_t* batchSize;			//defined in init by modeler
 	size_t* inputFeatures;		//defined in init by modeler
+	float* learningRate;		//defined in init by modeler
 	
 	size_t* inputSize;			//defined in init by modeler
 	size_t* inputBytes;			//defined in init by modeler
@@ -75,7 +76,7 @@ public:
 	}
 
 	void init(curandGenerator_t* randomGenerator, cudnnHandle_t* cudnnHandle, cublasHandle_t* cublasHandle, int* maxPropagationAlgorithms,
-		size_t* batchSize, size_t* inputFeatures,
+		size_t* batchSize, size_t* inputFeatures, float* learningRate,
 		size_t* inputSize, size_t* inputBytes,
 		float* gpuInput, float* gpuInputGradient, cudnnTensorDescriptor_t* inputDescriptor,
 		size_t* workspaceBytes, void* gpuWorkspace)
@@ -87,6 +88,7 @@ public:
 		
 		this->batchSize = batchSize;
 		this->inputFeatures = inputFeatures;
+		this->learningRate = learningRate;
 		
 		this->inputSize = inputSize;
 		this->inputBytes = inputBytes;
@@ -163,6 +165,9 @@ public:
 		cudnnConvolutionBackwardBias(*cudnnHandle, &alpha, outputDescriptor, gpuOutputGradient, &beta, biasDescriptor, gpuBiasGradient);
 		cudnnConvolutionBackwardFilter(*cudnnHandle, &alpha, *inputDescriptor, gpuInput, outputDescriptor, gpuOutputGradient, propagationDescriptor, weightBackwardPropagationAlgorithm, gpuWorkspace, *workspaceBytes, &beta, weightDescriptor, gpuWeightGradient);
 		cudnnConvolutionBackwardData(*cudnnHandle, &alpha, weightDescriptor, gpuWeight, outputDescriptor, gpuOutputGradient, propagationDescriptor, inputBackwardPropagationAlgorithm, gpuWorkspace, *workspaceBytes, &beta, *inputDescriptor, gpuInputGradient);
+		
+		cublasSaxpy(*cublasHandle, weightSize, learningRate, gpuWeightGradient, 1, gpuWeight, 1);
+		cublasSaxpy(*cublasHandle, biasSize, learningRate, gpuBiasGradient, 1, gpuBias, 1);
 	}
 
 	/*void updateWeights(float learningRate)

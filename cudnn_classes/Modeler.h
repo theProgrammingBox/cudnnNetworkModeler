@@ -11,6 +11,7 @@ public:
 
 	size_t batchSize;			//constructor defined
 	size_t inputFeatures;		//constructor defined
+	float learningRate;			//constructor defined
 	
 	size_t inputSize;			//defined in constructor
 	size_t inputBytes;			//defined in constructor
@@ -31,7 +32,7 @@ public:
 	
 	vector<Layer*> layers;		//user pass in layers
 	
-	Modeler(size_t batchSize, size_t inputFeatures)
+	Modeler(size_t batchSize, size_t inputFeatures, float learningRate)
 	{
 		if (batchSize <= 0 || inputFeatures <= 0)
 		{
@@ -47,6 +48,7 @@ public:
 
 		this->batchSize = batchSize;
 		this->inputFeatures = inputFeatures;
+		this->learningRate = learningRate;
 		
 		this->inputSize = batchSize * inputFeatures;
 		this->inputBytes = inputSize * sizeof(float);
@@ -89,7 +91,7 @@ public:
 		}
 		
 		layers[0]->init(&randomGenerator, &cudnnHandle, &cublasHandle, &maxPropagationAlgorithms,
-			&batchSize, &inputFeatures,
+			&batchSize, &inputFeatures, &learningRate,
 			&inputSize, &inputBytes,
 			gpuInput, gpuInputGradient, &inputDescriptor,
 			&workspaceBytes, gpuWorkspace);
