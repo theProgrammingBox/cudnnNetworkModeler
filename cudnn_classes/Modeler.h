@@ -163,10 +163,10 @@ public:
 		
 		for (size_t i = 0; i < layers.size(); i++)
 		{
-			/*layers[i]->printWeights();
+			layers[i]->printWeights();
 			layers[i]->printBias();
-			layers[i]->printOutput();*/
-			cout << "BatchSize: " << *layers[i]->batchSize << endl;
+			layers[i]->printOutput();/**/
+			//cout << "BatchSize: " << *layers[i]->batchSize << endl;
 			//cout << "InputFeatures: " << *layers[i]->inputFeatures << endl;
 			//cout << "OutputFeatures: " << layers[i]->outputFeatures << endl;
 		}

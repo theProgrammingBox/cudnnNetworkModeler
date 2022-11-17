@@ -115,8 +115,8 @@ public:
 		cudnnCreateTensorDescriptor(&biasDescriptor);
 		cudnnSetTensor4dDescriptor(biasDescriptor, CUDNN_TENSOR_NCHW, CUDNN_DATA_FLOAT, 1, outputFeatures, 1, 1);
 
-		/*curandGenerateNormal(*randomGenerator, gpuWeight, weightSize + (weightSize & 1), 0, 1);
-		curandGenerateNormal(*randomGenerator, gpuBias, biasSize + (biasSize & 1), 0, 1);*/
+		curandGenerateNormal(*randomGenerator, gpuWeight, weightSize + (weightSize & 1), 0, 1);
+		curandGenerateNormal(*randomGenerator, gpuBias, biasSize + (biasSize & 1), 0, 1);
 
 		this->workspaceBytes = workspaceBytes;
 		this->gpuWorkspace = gpuWorkspace;
