@@ -1,7 +1,7 @@
 #pragma once
 #include "Layer.h"
 
-class modeler
+class Modeler
 {
 public:
 	curandGenerator_t randomGenerator;	//defined in constructor
@@ -31,7 +31,7 @@ public:
 	
 	vector<Layer*> layers;		//user pass in layers
 	
-	modeler(size_t batchSize, size_t inputFeatures)
+	Modeler(size_t batchSize, size_t inputFeatures)
 	{
 		if (batchSize <= 0 || inputFeatures <= 0)
 		{
@@ -57,7 +57,7 @@ public:
 		cudnnSetTensor4dDescriptor(inputDescriptor, CUDNN_TENSOR_NCHW, CUDNN_DATA_FLOAT, batchSize, inputFeatures, 1, 1);
 	}
 	
-	~modeler()
+	~Modeler()
 	{
 		curandDestroyGenerator(randomGenerator);
 		cudnnDestroy(cudnnHandle);
@@ -80,7 +80,7 @@ public:
 		layers.push_back(layer);
 	}
 	
-	pair<float*, float*> init()
+	void init()
 	{
 		if (layers.size() <= 0)
 		{
@@ -111,7 +111,37 @@ public:
 		gpuOutputGradient = layers.back()->outputGradient;
 		outputDescriptor = &layers.back()->outputDescriptor;
 		cpuOutput = (float*)malloc(*outputBytes);
+	}
 
-		return make_pair(cpuInputGradient, cpuOutput);
+	float* getCpuOutput()
+	{
+		cudaMemcpy(cpuOutput, gpuOutput, *outputBytes, cudaMemcpyDeviceToHost);
+		return cpuOutput;
+	}
+
+	float* getCpuInputGradient()
+	{
+		cudaMemcpy(cpuInputGradient, gpuInputGradient, inputBytes, cudaMemcpyDeviceToHost);
+		return cpuInputGradient;
+	}
+
+	void forwardPropagate(float* cpuInput)
+	{
+		cudaMemcpy(gpuInput, cpuInput, inputBytes, cudaMemcpyHostToDevice);
+		for (size_t i = 0; i < layers.size(); i++)
+		{
+			layers[i]->forwardPropagate();
+		}
+	}
+
+	void backPropagate(float* cpuTarget)
+	{
+		float minusOne = -1.0f;
+		cudaMemcpy(gpuOutputGradient, cpuTarget, *outputBytes, cudaMemcpyHostToDevice);
+		cublasSaxpy(cublasHandle, *outputSize, &minusOne, gpuOutput, 1, gpuOutputGradient, 1);
+		for (size_t i = layers.size(); i--;)
+		{
+			layers[i]->backPropagate();
+		}
 	}
 };

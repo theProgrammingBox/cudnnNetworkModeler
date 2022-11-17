@@ -39,7 +39,7 @@ public:
 	cudnnTensorDescriptor_t biasDescriptor;		//defined in init
 	
 	size_t* workspaceBytes;		//defined in init by modeler
-	void* workspace;			//defined in init by modeler
+	void* gpuWorkspace;			//defined in init by modeler
 
 	cudnnConvolutionDescriptor_t propagationDescriptor;					//defined in init
 	cudnnConvolutionFwdAlgo_t forwardPropagationAlgorithm;				//defined in init
@@ -100,6 +100,12 @@ public:
 		cudaMalloc(&gpuBiasGradient, biasBytes);
 		cudnnCreateTensorDescriptor(&biasDescriptor);
 		cudnnSetTensor4dDescriptor(biasDescriptor, CUDNN_TENSOR_NCHW, CUDNN_DATA_FLOAT, 1, outputFeatures, 1, 1);
+
+		curandGenerateNormal(*randomGenerator, gpuWeight, weightSize + (weightSize & 1), 0, 1);
+		curandGenerateNormal(*randomGenerator, gpuBias, biasSize + (biasSize & 1), 0, 1);
+
+		this->workspaceBytes = workspaceBytes;
+		this->gpuWorkspace = gpuWorkspace;
 		
 		cudnnCreateConvolutionDescriptor(&propagationDescriptor);
 		cudnnSetConvolution2dDescriptor(propagationDescriptor, 0, 0, 1, 1, 1, 1, CUDNN_CROSS_CORRELATION, CUDNN_DATA_FLOAT);
@@ -120,7 +126,28 @@ public:
 		delete[] weightBackwardPropagationAlgorithms;
 
 		size_t tempWorkspaceBytes;
-		cudnnGetConvolutionForwardWorkspaceSize(*cudnnHandle, *inputDescriptor, weightDescriptor, propagationDescriptor, outputDescriptor, forwardPropagationAlgorithm, tempWorkspaceBytes);
-		
+		cudnnGetConvolutionForwardWorkspaceSize(*cudnnHandle, *inputDescriptor, weightDescriptor, propagationDescriptor, outputDescriptor, forwardPropagationAlgorithm, &tempWorkspaceBytes);
+		*workspaceBytes = max(*workspaceBytes, tempWorkspaceBytes);
+		cudnnGetConvolutionBackwardDataWorkspaceSize(*cudnnHandle, weightDescriptor, outputDescriptor, propagationDescriptor, *inputDescriptor, inputBackwardPropagationAlgorithm, &tempWorkspaceBytes);
+		*workspaceBytes = max(*workspaceBytes, tempWorkspaceBytes);
+		cudnnGetConvolutionBackwardFilterWorkspaceSize(*cudnnHandle, *inputDescriptor, outputDescriptor, propagationDescriptor, weightDescriptor, weightBackwardPropagationAlgorithm, &tempWorkspaceBytes);
+		*workspaceBytes = max(*workspaceBytes, tempWorkspaceBytes);
+	}
+
+	void forwardPropagate()
+	{
+		float alpha = 1;
+		float beta = 0;
+		cudnnConvolutionForward(*cudnnHandle, &alpha, *inputDescriptor, gpuInput, weightDescriptor, gpuWeight, propagationDescriptor, forwardPropagationAlgorithm, gpuWorkspace, *workspaceBytes, &beta, outputDescriptor, gpuOutput);
+		cudnnAddTensor(*cudnnHandle, &alpha, biasDescriptor, gpuBias, &alpha, outputDescriptor, gpuOutput);
+	}
+
+	void backPropagate()
+	{
+		float alpha = 1;
+		float beta = 0;
+		cudnnConvolutionBackwardBias(*cudnnHandle, &alpha, outputDescriptor, gpuOutputGradient, &beta, biasDescriptor, gpuBiasGradient);
+		cudnnConvolutionBackwardFilter(*cudnnHandle, &alpha, *inputDescriptor, gpuInput, outputDescriptor, gpuOutputGradient, propagationDescriptor, weightBackwardPropagationAlgorithm, gpuWorkspace, *workspaceBytes, &beta, weightDescriptor, gpuWeightGradient);
+		cudnnConvolutionBackwardData(*cudnnHandle, &alpha, weightDescriptor, gpuWeight, outputDescriptor, gpuOutputGradient, propagationDescriptor, inputBackwardPropagationAlgorithm, gpuWorkspace, *workspaceBytes, &beta, *inputDescriptor, gpuInputGradient);
 	}
 };
