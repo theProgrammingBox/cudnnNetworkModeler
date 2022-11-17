@@ -110,17 +110,17 @@ public:
 		cudnnCreateConvolutionDescriptor(&propagationDescriptor);
 		cudnnSetConvolution2dDescriptor(propagationDescriptor, 0, 0, 1, 1, 1, 1, CUDNN_CROSS_CORRELATION, CUDNN_DATA_FLOAT);
 		
-		cudnnConvolutionFwdAlgoPerf_t* forwardPropagationAlgorithms = new cudnnConvolutionFwdAlgoPerf_t[maxPropagationAlgorithms];
+		cudnnConvolutionFwdAlgoPerf_t* forwardPropagationAlgorithms = new cudnnConvolutionFwdAlgoPerf_t[*maxPropagationAlgorithms];
 		cudnnFindConvolutionForwardAlgorithm(*cudnnHandle, *inputDescriptor, weightDescriptor, propagationDescriptor, outputDescriptor, *maxPropagationAlgorithms, maxPropagationAlgorithms, forwardPropagationAlgorithms);
 		forwardPropagationAlgorithm = forwardPropagationAlgorithms[0].algo;
 		delete[] forwardPropagationAlgorithms;
 
-		cudnnConvolutionBwdDataAlgoPerf_t* inputBackwardPropagationAlgorithms = new cudnnConvolutionBwdDataAlgoPerf_t[maxPropagationAlgorithms];
+		cudnnConvolutionBwdDataAlgoPerf_t* inputBackwardPropagationAlgorithms = new cudnnConvolutionBwdDataAlgoPerf_t[*maxPropagationAlgorithms];
 		cudnnFindConvolutionBackwardDataAlgorithm(*cudnnHandle, weightDescriptor, *inputDescriptor, propagationDescriptor, outputDescriptor, *maxPropagationAlgorithms, maxPropagationAlgorithms, inputBackwardPropagationAlgorithms);
 		inputBackwardPropagationAlgorithm = inputBackwardPropagationAlgorithms[0].algo;
 		delete[] inputBackwardPropagationAlgorithms;
 
-		cudnnConvolutionBwdFilterAlgoPerf_t* weightBackwardPropagationAlgorithms = new cudnnConvolutionBwdFilterAlgoPerf_t[maxPropagationAlgorithms];
+		cudnnConvolutionBwdFilterAlgoPerf_t* weightBackwardPropagationAlgorithms = new cudnnConvolutionBwdFilterAlgoPerf_t[*maxPropagationAlgorithms];
 		cudnnFindConvolutionBackwardFilterAlgorithm(*cudnnHandle, *inputDescriptor, outputDescriptor, propagationDescriptor, weightDescriptor, *maxPropagationAlgorithms, maxPropagationAlgorithms, weightBackwardPropagationAlgorithms);
 		weightBackwardPropagationAlgorithm = weightBackwardPropagationAlgorithms[0].algo;
 		delete[] weightBackwardPropagationAlgorithms;
@@ -150,4 +150,12 @@ public:
 		cudnnConvolutionBackwardFilter(*cudnnHandle, &alpha, *inputDescriptor, gpuInput, outputDescriptor, gpuOutputGradient, propagationDescriptor, weightBackwardPropagationAlgorithm, gpuWorkspace, *workspaceBytes, &beta, weightDescriptor, gpuWeightGradient);
 		cudnnConvolutionBackwardData(*cudnnHandle, &alpha, weightDescriptor, gpuWeight, outputDescriptor, gpuOutputGradient, propagationDescriptor, inputBackwardPropagationAlgorithm, gpuWorkspace, *workspaceBytes, &beta, *inputDescriptor, gpuInputGradient);
 	}
+
+	/*void updateWeights(float learningRate)
+	{
+		float alpha = -learningRate;
+		float beta = 1;
+		cudnnAddTensor(*cudnnHandle, &alpha, biasDescriptor, gpuBiasGradient, &beta, biasDescriptor, gpuBias);
+		cudnnAddTensor(*cudnnHandle, &alpha, weightDescriptor, gpuWeightGradient, &beta, weightDescriptor, gpuWeight);
+	}*/
 };

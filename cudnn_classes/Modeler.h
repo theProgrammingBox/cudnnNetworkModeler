@@ -107,8 +107,8 @@ public:
 		
 		outputSize = &layers.back()->outputSize;
 		outputBytes = &layers.back()->outputBytes;
-		gpuOutput = layers.back()->output;
-		gpuOutputGradient = layers.back()->outputGradient;
+		gpuOutput = layers.back()->gpuOutput;
+		gpuOutputGradient = layers.back()->gpuOutputGradient;
 		outputDescriptor = &layers.back()->outputDescriptor;
 		cpuOutput = (float*)malloc(*outputBytes);
 	}
@@ -128,10 +128,10 @@ public:
 	void forwardPropagate(float* cpuInput)
 	{
 		cudaMemcpy(gpuInput, cpuInput, inputBytes, cudaMemcpyHostToDevice);
-		for (size_t i = 0; i < layers.size(); i++)
+		/*for (size_t i = 0; i < layers.size(); i++)
 		{
 			layers[i]->forwardPropagate();
-		}
+		}*/
 	}
 
 	void backPropagate(float* cpuTarget)
@@ -139,9 +139,9 @@ public:
 		float minusOne = -1.0f;
 		cudaMemcpy(gpuOutputGradient, cpuTarget, *outputBytes, cudaMemcpyHostToDevice);
 		cublasSaxpy(cublasHandle, *outputSize, &minusOne, gpuOutput, 1, gpuOutputGradient, 1);
-		for (size_t i = layers.size(); i--;)
+		/*for (size_t i = layers.size(); i--;)
 		{
 			layers[i]->backPropagate();
-		}
+		}*/
 	}
 };
