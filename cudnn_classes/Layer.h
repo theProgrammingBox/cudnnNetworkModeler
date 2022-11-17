@@ -199,7 +199,7 @@ public:
 		{
 			cout << cpuBias[i] << " ";
 		}
-		cout << endl;
+		cout << endl << endl;
 		delete[] cpuBias;
 	}
 
@@ -208,9 +208,13 @@ public:
 		float* cpuOutput = new float[outputSize];
 		cudaMemcpy(cpuOutput, gpuOutput, outputBytes, cudaMemcpyDeviceToHost);
 		cout << "Output:" << endl;
-		for (size_t i = outputSize; i--;)
+		for (size_t i = *batchSize; i--;)
 		{
-			cout << cpuOutput[i] << " ";
+			for (size_t j = outputFeatures; j--;)
+			{
+				cout << cpuOutput[i * outputFeatures + j] << " ";
+			}
+			cout << endl;
 		}
 		cout << endl;
 		delete[] cpuOutput;

@@ -128,10 +128,10 @@ public:
 	void forwardPropagate(float* cpuInput)
 	{
 		cudaMemcpy(gpuInput, cpuInput, inputBytes, cudaMemcpyHostToDevice);
-		/*for (size_t i = 0; i < layers.size(); i++)
+		for (size_t i = 0; i < layers.size(); i++)
 		{
 			layers[i]->forwardPropagate();
-		}*/
+		}
 	}
 
 	void backPropagate(float* cpuTarget)
