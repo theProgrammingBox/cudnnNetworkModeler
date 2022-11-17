@@ -20,6 +20,9 @@ int main()
 	
 	cout << "hi\n";
 
+	modeler.randomizeInput();
+	modeler.print();
+
 	// init cpu memory
 	cpuInput = new float[batchSize * inputFeatures];
 	for (size_t i = batchSize; i--;)

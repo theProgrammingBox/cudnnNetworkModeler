@@ -144,4 +144,36 @@ public:
 			layers[i]->backPropagate();
 		}*/
 	}
+
+	void print()
+	{
+		float* cpuInput = new float[inputSize];
+		cudaMemcpy(cpuInput, gpuInput, inputBytes, cudaMemcpyDeviceToHost);
+		cout << "Input:" << endl;
+		for (size_t i = 0; i < batchSize; i++)
+		{
+			for (size_t j = 0; j < inputFeatures; j++)
+			{
+				cout << cpuInput[i * inputFeatures + j] << " ";
+			}
+			cout << endl;
+		}
+		cout << endl;
+		delete[] cpuInput;
+		
+		for (size_t i = 0; i < layers.size(); i++)
+		{
+			/*layers[i]->printWeights();
+			layers[i]->printBias();
+			layers[i]->printOutput();*/
+			cout << "BatchSize: " << *layers[i]->batchSize << endl;
+			//cout << "InputFeatures: " << *layers[i]->inputFeatures << endl;
+			//cout << "OutputFeatures: " << layers[i]->outputFeatures << endl;
+		}
+	}
+
+	void randomizeInput()
+	{
+		curandGenerateNormal(randomGenerator, gpuInput, inputSize + (inputSize & 1), 0.0f, 1.0f);
+	}
 };

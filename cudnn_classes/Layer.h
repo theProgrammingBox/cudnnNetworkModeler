@@ -80,6 +80,20 @@ public:
 		float* gpuInput, float* gpuInputGradient, cudnnTensorDescriptor_t* inputDescriptor,
 		size_t* workspaceBytes, void* gpuWorkspace)
 	{
+		this->randomGenerator = randomGenerator;
+		this->cudnnHandle = cudnnHandle;
+		this->cublasHandle = cublasHandle;
+		this->maxPropagationAlgorithms = maxPropagationAlgorithms;
+		
+		this->batchSize = batchSize;
+		this->inputFeatures = inputFeatures;
+		
+		this->inputSize = inputSize;
+		this->inputBytes = inputBytes;
+		this->gpuInput = gpuInput;
+		this->gpuInputGradient = gpuInputGradient;
+		this->inputDescriptor = inputDescriptor;
+		
 		outputSize = *batchSize * outputFeatures;
 		outputBytes = outputSize * sizeof(float);
 		cudaMalloc(&gpuOutput, outputBytes);
@@ -101,8 +115,8 @@ public:
 		cudnnCreateTensorDescriptor(&biasDescriptor);
 		cudnnSetTensor4dDescriptor(biasDescriptor, CUDNN_TENSOR_NCHW, CUDNN_DATA_FLOAT, 1, outputFeatures, 1, 1);
 
-		curandGenerateNormal(*randomGenerator, gpuWeight, weightSize + (weightSize & 1), 0, 1);
-		curandGenerateNormal(*randomGenerator, gpuBias, biasSize + (biasSize & 1), 0, 1);
+		/*curandGenerateNormal(*randomGenerator, gpuWeight, weightSize + (weightSize & 1), 0, 1);
+		curandGenerateNormal(*randomGenerator, gpuBias, biasSize + (biasSize & 1), 0, 1);*/
 
 		this->workspaceBytes = workspaceBytes;
 		this->gpuWorkspace = gpuWorkspace;
@@ -158,4 +172,47 @@ public:
 		cudnnAddTensor(*cudnnHandle, &alpha, biasDescriptor, gpuBiasGradient, &beta, biasDescriptor, gpuBias);
 		cudnnAddTensor(*cudnnHandle, &alpha, weightDescriptor, gpuWeightGradient, &beta, weightDescriptor, gpuWeight);
 	}*/
+
+	void printWeights()
+	{
+		float* cpuWeight = new float[weightSize];
+		cudaMemcpy(cpuWeight, gpuWeight, weightBytes, cudaMemcpyDeviceToHost);
+		cout << "Weights:" << endl;
+		for (size_t i = *inputFeatures; i--;)
+		{
+			for (size_t j = outputFeatures; j--;)
+			{
+				cout << cpuWeight[i * outputFeatures + j] << " ";
+			}
+			cout << endl;
+		}
+		cout << endl;
+		delete[] cpuWeight;
+	}
+
+	void printBias()
+	{
+		float* cpuBias = new float[biasSize];
+		cudaMemcpy(cpuBias, gpuBias, biasBytes, cudaMemcpyDeviceToHost);
+		cout << "Bias:" << endl;
+		for (size_t i = biasSize; i--;)
+		{
+			cout << cpuBias[i] << " ";
+		}
+		cout << endl;
+		delete[] cpuBias;
+	}
+
+	void printOutput()
+	{
+		float* cpuOutput = new float[outputSize];
+		cudaMemcpy(cpuOutput, gpuOutput, outputBytes, cudaMemcpyDeviceToHost);
+		cout << "Output:" << endl;
+		for (size_t i = outputSize; i--;)
+		{
+			cout << cpuOutput[i] << " ";
+		}
+		cout << endl;
+		delete[] cpuOutput;
+	}
 };
