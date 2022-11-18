@@ -8,6 +8,8 @@
 #include <vector>
 #include <assert.h>
 #include <algorithm>
+#include <stdlib.h>
+#include <time.h>
 
 using std::cout;
 using std::endl;

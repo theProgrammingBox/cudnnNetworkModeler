@@ -3,117 +3,67 @@
 
 int main()
 {
-	const size_t batchSize = 7;
-	const size_t inputFeatures = 5;
-	const size_t outputFeatures = 3;
-	const float learningRate = 0.01f;
+	srand(time(NULL));
+
+	const size_t batchSize = 5;
+	const size_t inputFeatures = 2;
+	const size_t outputFeatures = 1;
+	const float learningRate = 0.002f;
 
 	float* cpuInput;
 	float* cpuInputGradient;
 	float* cpuOutput;
 	float* cpuTarget;
+	cpuInput = new float[batchSize * inputFeatures];
+	cpuTarget = new float[batchSize * outputFeatures];
 
 	Modeler modeler(batchSize, inputFeatures, learningRate);
 	modeler.addLayer(new Layer(outputFeatures));
 	modeler.init();
 
-	//modeler.randomizeInput();
-	cpuInput = new float[batchSize * inputFeatures];
-	for (size_t i = batchSize; i--;)
-	
-	// PRINT DATA
-	cout << "Weight:" << endl;
-	for (int i = 0; i < outputFeatures; i++)
-	
-	// PRINT DATA
-	cout << "Weight:" << endl;
-	for (int i = 0; i < outputFeatures; i++)
-	
-	// PRINT DATA
-	cout << "Weight:" << endl;
-	for (int i = 0; i < outputFeatures; i++)
-	
-	// PRINT DATA
-	cout << "Weight:" << endl;
-	for (int i = 0; i < outputFeatures; i++)
-	
-	// PRINT DATA
-	cout << "Weight:" << endl;
-	for (int i = 0; i < outputFeatures; i++)
-	
-	// PRINT DATA
-	cout << "Weight:" << endl;
-	for (int i = 0; i < outputFeatures; i++)
-	
-	// PRINT DATA
-	cout << "Weight:" << endl;
-	for (int i = 0; i < outputFeatures; i++)
-	
-	// PRINT DATA
-	cout << "Weight:" << endl;
-	for (int i = 0; i < outputFeatures; i++)
-	
-	// PRINT DATA
-	cout << "Weight:" << endl;
-	for (int i = 0; i < outputFeatures; i++)
-	
-	// PRINT DATA
-	cout << "Weight:" << endl;
-	for (int i = 0; i < outputFeatures; i++)
-	
-	// PRINT DATA
-	cout << "Weight:" << endl;
-	for (int i = 0; i < outputFeatures; i++)
-	
-	// PRINT DATA
-	cout << "Weight:" << endl;
-	for (int i = 0; i < outputFeatures; i++)
-	
-	// PRINT DATA
-	cout << "Weight:" << endl;
-	for (int i = 0; i < outputFeatures; i++)
-	
-	// PRINT DATA
-	cout << "Weight:" << endl;
-	for (int i = 0; i < outputFeatures; i++)
-	
-	// PRINT DATA
-	cout << "Weight:" << endl;
-	for (int i = 0; i < outputFeatures; i++)
-	
-	// PRINT DATA
-	cout << "Weight:" << endl;
-	for (int i = 0; i < outputFeatures; i++)
-	
-	// PRINT DATA
-	cout << "Weight:" << endl;
-	for (int i = 0; i < outputFeatures; i++)
-	
-	// PRINT DATA
-	cout << "Weight:" << endl;
-	for (int i = 0; i < outputFeatures; i++)
+	size_t iteration = 100;
+	while (iteration--)
 	{
-		for (size_t j = inputFeatures; j--;)
+		//modeler.randomizeInput();
+		for (size_t i = batchSize; i--;)
 		{
-			cpuInput[i * inputFeatures + j] = i * inputFeatures + j;
+			for (size_t j = inputFeatures; j--;)
+			{
+				cpuInput[i * inputFeatures + j] = (float)rand() / RAND_MAX;
+			}
 		}
+
+		for (size_t i = batchSize; i--;)
+		{
+			for (size_t j = outputFeatures; j--;)
+			{
+				// sum of input features
+				cpuTarget[i * outputFeatures + j] = 0;
+				for (size_t k = inputFeatures; k--;)
+				{
+					cpuTarget[i * outputFeatures + j] += cpuInput[i * inputFeatures + k];
+				}
+			}
+		}
+
+		modeler.forwardPropagate(cpuInput);
+		cpuOutput = modeler.getCpuOutput();
+
+		modeler.backPropagate(cpuTarget);
+		//cpuInputGradient = modeler.getCpuInputGradient();
 	}
 
-	cpuTarget = new float[batchSize * outputFeatures];
-	for (size_t i = batchSize; i--;)
+	cout << "Target:" << endl;
+	for (size_t i = 0; i < batchSize; i++)
 	{
-		for (size_t j = outputFeatures; j--;)
+		for (size_t j = 0; j < outputFeatures; j++)
 		{
-			cpuTarget[i * outputFeatures + j] = i * outputFeatures + j;
+			cout << cpuTarget[i * outputFeatures + j] << " ";
 		}
+		cout << endl;
 	}
+	cout << endl;
 
-	modeler.forwardPropagate(cpuInput);
-	cpuOutput = modeler.getCpuOutput();
-	
-	modeler.backPropagate(cpuTarget);
-	//cpuInputGradient = modeler.getCpuInputGradient();
-	
 	modeler.print();
 
 	return 0;

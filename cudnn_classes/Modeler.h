@@ -12,7 +12,7 @@ public:
 	size_t batchSize;			//constructor defined
 	size_t inputFeatures;		//constructor defined
 	float learningRate;			//constructor defined
-	
+
 	size_t inputSize;			//defined in constructor
 	size_t inputBytes;			//defined in constructor
 	float* gpuInput;			//defined in constructor, user pass in cpuInput in forwardPropagation
@@ -26,12 +26,12 @@ public:
 	float* gpuOutput;			//defined in init by layers
 	float* gpuOutputGradient;	//defined in init by layers, user pass in cpuTarget, subtracted in backpropagation
 	cudnnTensorDescriptor_t* outputDescriptor;	//defined in init by layers
-	
+
 	size_t workspaceBytes = 0;	//defined in init, uses layers
 	void* gpuWorkspace;			//defined in init, uses layers
-	
+
 	vector<Layer*> layers;		//user pass in layers
-	
+
 	Modeler(size_t batchSize, size_t inputFeatures, float learningRate)
 	{
 		if (batchSize <= 0 || inputFeatures <= 0)
@@ -39,7 +39,7 @@ public:
 			cout << "Invalid batch size or input features" << endl;
 			assert(false);
 		}
-		
+
 		curandCreateGenerator(&randomGenerator, CURAND_RNG_PSEUDO_DEFAULT);
 		curandSetPseudoRandomGeneratorSeed(randomGenerator, duration_cast<nanoseconds>(high_resolution_clock::now().time_since_epoch()).count());
 		cudnnCreate(&cudnnHandle);
@@ -49,7 +49,7 @@ public:
 		this->batchSize = batchSize;
 		this->inputFeatures = inputFeatures;
 		this->learningRate = learningRate;
-		
+
 		this->inputSize = batchSize * inputFeatures;
 		this->inputBytes = inputSize * sizeof(float);
 		cudaMalloc(&gpuInput, inputBytes);
@@ -58,30 +58,30 @@ public:
 		cudnnCreateTensorDescriptor(&inputDescriptor);
 		cudnnSetTensor4dDescriptor(inputDescriptor, CUDNN_TENSOR_NCHW, CUDNN_DATA_FLOAT, batchSize, inputFeatures, 1, 1);
 	}
-	
+
 	~Modeler()
 	{
 		curandDestroyGenerator(randomGenerator);
 		cudnnDestroy(cudnnHandle);
 		cublasDestroy(cublasHandle);
-		
+
 		cudaFree(gpuInput);
 		cudaFree(gpuInputGradient);
 		free(cpuInputGradient);
 		cudnnDestroyTensorDescriptor(inputDescriptor);
 
 		free(cpuOutput);
-		
+
 		cudaFree(gpuWorkspace);
-		
+
 		for (size_t i = layers.size(); i--;) delete layers[i];
 	}
-	
+
 	void addLayer(Layer* layer)
 	{
 		layers.push_back(layer);
 	}
-	
+
 	void init()
 	{
 		if (layers.size() <= 0)
@@ -89,24 +89,24 @@ public:
 			cout << "No layers added" << endl;
 			assert(false);
 		}
-		
+
 		layers[0]->init(&randomGenerator, &cudnnHandle, &cublasHandle, &maxPropagationAlgorithms,
 			&batchSize, &inputFeatures, &learningRate,
 			&inputSize, &inputBytes,
 			gpuInput, gpuInputGradient, &inputDescriptor,
 			&workspaceBytes, gpuWorkspace);
-		
+
 		for (size_t i = 1; i < layers.size(); i++)
 		{
 			layers[i]->init(&randomGenerator, &cudnnHandle, &cublasHandle, &maxPropagationAlgorithms,
-				&batchSize, &layers[i - 1]->outputFeatures,
+				&batchSize, &layers[i - 1]->outputFeatures, &learningRate,
 				&layers[i - 1]->outputSize, &layers[i - 1]->outputBytes,
 				layers[i - 1]->gpuOutput, layers[i - 1]->gpuOutputGradient, &layers[i - 1]->outputDescriptor,
 				&workspaceBytes, gpuWorkspace);
 		}
 
 		cudaMalloc(&gpuWorkspace, workspaceBytes);
-		
+
 		outputSize = &layers.back()->outputSize;
 		outputBytes = &layers.back()->outputBytes;
 		gpuOutput = layers.back()->gpuOutput;
@@ -141,6 +141,7 @@ public:
 		float minusOne = -1.0f;
 		cudaMemcpy(gpuOutputGradient, cpuTarget, *outputBytes, cudaMemcpyHostToDevice);
 		cublasSaxpy(cublasHandle, *outputSize, &minusOne, gpuOutput, 1, gpuOutputGradient, 1);
+		//layers[0]->backPropagate();
 		/*for (size_t i = layers.size(); i--;)
 		{
 			layers[i]->backPropagate();
@@ -162,15 +163,13 @@ public:
 		}
 		cout << endl;
 		delete[] cpuInput;
-		
+
 		for (size_t i = 0; i < layers.size(); i++)
 		{
 			layers[i]->printWeights();
 			layers[i]->printBias();
-			layers[i]->printOutput();/**/
-			//cout << "BatchSize: " << *layers[i]->batchSize << endl;
-			//cout << "InputFeatures: " << *layers[i]->inputFeatures << endl;
-			//cout << "OutputFeatures: " << layers[i]->outputFeatures << endl;
+			layers[i]->printOutput();
+			layers[i]->printOutputGradient();
 		}
 	}
 
