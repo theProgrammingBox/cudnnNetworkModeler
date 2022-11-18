@@ -21,7 +21,7 @@ int main()
 	modeler.addLayer(new Layer(outputFeatures));
 	modeler.init();
 
-	size_t iteration = 100;
+	size_t iteration = 1;
 	while (iteration--)
 	{
 		//modeler.randomizeInput();
@@ -65,6 +65,31 @@ int main()
 	cout << endl;
 
 	modeler.print();
+
+	//print output
+	float* cpuWeight;
+	cpuWeight = (float*)malloc(sizeof(float) * inputFeatures * outputFeatures);
+	cudaMemcpy(cpuWeight, modeler.layers[0]->gpuWeight, sizeof(float) * inputFeatures * outputFeatures, cudaMemcpyDeviceToHost);
+	
+	float* cpuBias;
+	cpuBias = (float*)malloc(sizeof(float) * outputFeatures);
+	cudaMemcpy(cpuBias, modeler.layers[0]->gpuBias, sizeof(float) * outputFeatures, cudaMemcpyDeviceToHost);
+	
+	cout << "Output manual:" << endl;
+	for (size_t i = 0; i < batchSize; i++)
+	{
+		for (size_t j = 0; j < outputFeatures; j++)
+		{
+			float sum = cpuBias[j];
+			for (size_t k = 0; k < inputFeatures; k++)
+			{
+				sum += cpuInput[i * inputFeatures + k] * cpuWeight[j * inputFeatures + k];
+			}
+			cout << sum << " ";
+		}
+		cout << endl;
+	}
+	cout << endl;
 
 	return 0;
 }

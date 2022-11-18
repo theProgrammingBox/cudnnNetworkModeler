@@ -175,11 +175,11 @@ public:
 		float* cpuWeight = new float[weightSize];
 		cudaMemcpy(cpuWeight, gpuWeight, weightBytes, cudaMemcpyDeviceToHost);
 		cout << "Weights:" << endl;
-		for (size_t i = *inputFeatures; i--;)
+		for (size_t i = outputFeatures; i--;)
 		{
-			for (size_t j = outputFeatures; j--;)
+			for (size_t j = *inputFeatures; j--;)
 			{
-				cout << cpuWeight[i * outputFeatures + j] << " ";
+				cout << cpuWeight[i * *inputFeatures + j] << " ";
 			}
 			cout << endl;
 		}
